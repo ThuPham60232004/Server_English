@@ -2,35 +2,16 @@ import mongoose from "mongoose";
 import FlashCard from '../models/flashcard.js';
 import Collection from '../models/collection.js';
 
-export const createFlashcard = async (req, res, next) => {
-    const { collectionid } = req.params;
-    const newFlashcard = new FlashCard(req.body);
-
-    try {
-        if (!mongoose.Types.ObjectId.isValid(collectionid)) {
-            return res.status(400).json({ message: "Invalid collection ID" });
-        }
-
-        const savedFlashcard = await newFlashcard.save();
-        const updatedCollection = await Collection.findByIdAndUpdate(
-            collectionid,
-            { $push: { flashcards: savedFlashcard._id } },
-            { new: true }
-        );
-
-        if (!updatedCollection) {
-            return res.status(404).json({ message: "Collection not found." });
-        }
-
-        res.status(200).json({
-            message: "Flashcard created and added to collection successfully.",
-            updatedCollection,
-        });
-    } catch (err) {
+ export const createFlashcard =async(req,res,next)=>{
+    const newFlashcard=new FlashCard(req.body);
+    try{
+        const savedFlashcard=await newFlashcard.save();
+        res.status(200).json(savedFlashcard);
+    }
+    catch(err){
         next(err);
     }
-};
-  
+ } 
 export const updateFlashcard = async (req, res, next) => {
     try {
         const updatedFlashcard = await FlashCard.findByIdAndUpdate(
@@ -77,22 +58,12 @@ export const getFlashcard = async (req, res, next) => {
     }
 };
 export const getFlashcardByCollectionId = async (req, res, next) => {
-    const { collectionid } = req.params;
-
     try {
-        if (!mongoose.Types.ObjectId.isValid(collectionid)) {
-            return res.status(400).json({ message: "Invalid collection ID" });
-        }
-
-        const collection = await Collection.findById(collectionid).populate('flashcards');
-
-        if (!collection) {
-            return res.status(404).json({ message: "Collection not found" });
-        }
-
-        // Return the flashcards associated with the collection
-        res.status(200).json(collection.flashcards);
-    } catch (err) {
-        next(err);
-    }
+        const collectionId = req.params.id;
+        const flashcards = await FlashCard.find({ collection: collectionId });
+        res.status(200).json(flashcards);
+      } catch (error) {
+        console.error("Error fetching flashcards by collection:", error);
+        res.status(500).json({ message: "Lỗi server khi lấy flashcard" });
+      }
 };
